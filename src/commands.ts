@@ -289,7 +289,8 @@ export async function applySnippetWorkspaceEdit(edit: WorkspaceEdit) {
         wsEdit.documentChanges = [newChange];
       } else {
         lineDelta = countLines(indel.newText) - (indel.range.end.line - indel.range.start.line);
-        wsEdit.documentChanges = [change];
+        const newChange = TextDocumentEdit.create(change.textDocument, [TextEdit.replace(indel.range, indel.newText)]);
+        wsEdit.documentChanges = [newChange];
       }
 
       await workspace.applyEdit(wsEdit);
