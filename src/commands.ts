@@ -272,8 +272,10 @@ export async function applySnippetWorkspaceEdit(edit: WorkspaceEdit) {
   let lineDelta = 0;
   const change = edit.documentChanges[0];
   if (TextDocumentEdit.is(change)) {
+    const wsEdit: WorkspaceEdit = {
+        documentChanges: []
+    };
     for (const indel of change.edits) {
-      const wsEdit: WorkspaceEdit = {};
       const parsed = parseSnippet(indel.newText);
       if (parsed) {
         const [newText, [placeholderStart, placeholderLength]] = parsed;
@@ -286,15 +288,14 @@ export async function applySnippetWorkspaceEdit(edit: WorkspaceEdit) {
         selection = Range.create(startLine, startColumn, startLine, endColumn);
 
         const newChange = TextDocumentEdit.create(change.textDocument, [TextEdit.replace(indel.range, newText)]);
-        wsEdit.documentChanges = [newChange];
+        wsEdit.documentChanges?.push(newChange);
       } else {
         lineDelta = countLines(indel.newText) - (indel.range.end.line - indel.range.start.line);
         const newChange = TextDocumentEdit.create(change.textDocument, [TextEdit.replace(indel.range, indel.newText)]);
-        wsEdit.documentChanges = [newChange];
+        wsEdit.documentChanges?.push(newChange);
       }
-
-      await workspace.applyEdit(wsEdit);
     }
+    await workspace.applyEdit(wsEdit);
 
     if (selection) {
       const current = await workspace.document;
